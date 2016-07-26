@@ -10,6 +10,7 @@ import {
   Animated,
   Platform,
   PixelRatio,
+  LayoutAnimation
 } from 'react-native';
 
 import Message from './Message';
@@ -66,7 +67,7 @@ class GiftedMessenger extends Component {
       dataSource: ds.cloneWithRows([]),
       text: props.text,
       disabled: true,
-      height: new Animated.Value(this.listViewMaxHeight),
+      height: this.listViewMaxHeight, //new Animated.Value(this.listViewMaxHeight),
       appearAnim: new Animated.Value(0),
     };
   }
@@ -75,7 +76,7 @@ class GiftedMessenger extends Component {
     this.styles = {
       container: {
         flex: 1,
-        backgroundColor: '#FFF',
+        backgroundColor: '#ededed',
       },
       listView: {
         flex: 1,
@@ -83,18 +84,24 @@ class GiftedMessenger extends Component {
       textInputContainer: {
         height: 44,
         borderTopWidth: 1 / PixelRatio.get(),
-        borderColor: '#b2b2b2',
+        backgroundColor:'#fff',
+        borderColor: '#ccc',
         flexDirection: 'row',
-        paddingLeft: 10,
-        paddingRight: 10,
+        paddingLeft: 16,
+        paddingRight:16,
       },
       textInput: {
         alignSelf: 'center',
         height: 30,
         width: 100,
-        backgroundColor: '#FFF',
+        backgroundColor: '#ededed',
+        borderWidth:1/PixelRatio.get(),
+        borderColor:'#e4e4e4',
+        color:'#666',
+        borderRadius:4,
         flex: 1,
-        padding: 0,
+        paddingVertical: 0,
+        paddingHorizontal:8,
         margin: 0,
         fontSize: 15,
       },
@@ -126,6 +133,7 @@ class GiftedMessenger extends Component {
       },
       loadEarlierMessagesButton: {
         fontSize: 14,
+        color:'#ccc'
       },
     };
 
@@ -176,10 +184,19 @@ class GiftedMessenger extends Component {
 
     if (nextProps.maxHeight !== this.props.maxHeight) {
       this.listViewMaxHeight = nextProps.maxHeight;
-      Animated.timing(this.state.height, {
+      /*Animated.timing(this.state.height, {
         toValue: this.listViewMaxHeight,
         duration: 150,
-      }).start();
+      }).start();*/
+      LayoutAnimation.configureNext({
+        duration: 250,
+        create: {
+          type:     LayoutAnimation.Types.linear,
+          property: LayoutAnimation.Properties.opacity,
+        },
+        update: { type: 'keyboard' }
+      });
+      this.setState({height:this.listViewMaxHeight});
     }
 
     if (nextProps.hideTextInput && !this.props.hideTextInput) {
@@ -214,10 +231,20 @@ class GiftedMessenger extends Component {
   }
 
   onKeyboardWillHide() {
-    Animated.timing(this.state.height, {
+    LayoutAnimation.configureNext({
+      duration: 250,
+      create: {
+        type:     LayoutAnimation.Types.linear,
+        property: LayoutAnimation.Properties.opacity,
+      },
+      update: { type: 'keyboard' }
+    });
+    this.setState({height:this.listViewMaxHeight});
+
+    /*Animated.timing(this.state.height, {
       toValue: this.listViewMaxHeight,
       duration: 150,
-    }).start();
+    }).start();*/
   }
 
   onKeyboardDidHide(e) {
@@ -234,10 +261,20 @@ class GiftedMessenger extends Component {
   }
 
   onKeyboardWillShow(e) {
-    Animated.timing(this.state.height, {
+    LayoutAnimation.configureNext({
+      duration: 250,
+      create: {
+        type:     LayoutAnimation.Types.linear,
+        property: LayoutAnimation.Properties.opacity,
+      },
+      update: { type: 'keyboard' }
+    });
+    this.setState({height:this.listViewMaxHeight - e.endCoordinates.height});
+
+    /*Animated.timing(this.state.height, {
       toValue: this.listViewMaxHeight - e.endCoordinates.height,
       duration: 200,
-    }).start();
+    }).start();*/
   }
 
   onKeyboardDidShow(e) {
@@ -403,8 +440,7 @@ class GiftedMessenger extends Component {
         <View style={this.styles.loadEarlierMessages}>
           <Button
             style={this.styles.loadEarlierMessagesButton}
-            onPress={() => {this.preLoadEarlierMessages();}}
-          >
+            onPress={() => {this.preLoadEarlierMessages();}}>
             {this.props.loadEarlierMessagesButtonText}
           </Button>
         </View>
@@ -510,7 +546,7 @@ class GiftedMessenger extends Component {
 
   renderAnimatedView() {
     return (
-      <Animated.View
+      <View
         style={{
           height: this.state.height,
           justifyContent: 'flex-end',
@@ -545,7 +581,7 @@ class GiftedMessenger extends Component {
           {...this.props}
         />
 
-      </Animated.View>
+      </View>
     );
   }
 
@@ -559,6 +595,16 @@ class GiftedMessenger extends Component {
 
   renderTextInput() {
     if (this.props.hideTextInput === false) {
+      /*
+       <Button
+            style={this.styles.sendButton}
+            styleDisabled={this.styles.sendButtonDisabled}
+            onPress={this.onSend}
+            disabled={this.state.disabled}
+          >
+            {this.props.sendButtonText}
+          </Button>
+      */
       return (
         <View style={this.styles.textInputContainer}>
           {this.props.leftControlBar}
@@ -568,21 +614,13 @@ class GiftedMessenger extends Component {
             placeholderTextColor={this.props.placeholderTextColor}
             onChangeText={this.onChangeText}
             value={this.state.text}
+            selectionColor={"#666"}
             autoFocus={this.props.autoFocus}
             returnKeyType={this.props.submitOnReturn ? 'send' : 'default'}
             onSubmitEditing={this.props.submitOnReturn ? this.onSend : () => {}}
             enablesReturnKeyAutomatically={true}
-
             blurOnSubmit={this.props.blurOnSubmit}
           />
-          <Button
-            style={this.styles.sendButton}
-            styleDisabled={this.styles.sendButtonDisabled}
-            onPress={this.onSend}
-            disabled={this.state.disabled}
-          >
-            {this.props.sendButtonText}
-          </Button>
         </View>
       );
     }
