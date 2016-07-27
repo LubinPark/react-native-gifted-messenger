@@ -5,14 +5,18 @@ import ParsedText from 'react-native-parsed-text';
 
 const styles = StyleSheet.create({
   bubble: {
-    borderRadius: 15,
+    borderRadius: 8,
     paddingLeft: 14,
     paddingRight: 14,
     paddingBottom: 10,
-    paddingTop: 8,
+    paddingTop: 2,
+    borderWidth:StyleSheet.hairlineWidth,
+    borderColor:'#ccc'
   },
   text: {
-    color: '#000',
+    color: '#1b1b1b',
+    fontSize:15,
+    lineHeight:24
   },
   textLeft: {
   },
@@ -95,7 +99,7 @@ export default class Bubble extends React.Component {
   }
 
   render() {
-    const flexStyle = {};
+    const flexStyle = this.props.position === 'left' ? {marginRight:70} : {flex:1};
     if (this.props.text) {
       if (this.props.text.length > 40) {
         flexStyle.flex = 1;

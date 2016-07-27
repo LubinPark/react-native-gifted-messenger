@@ -76,7 +76,7 @@ class GiftedMessenger extends Component {
     this.styles = {
       container: {
         flex: 1,
-        backgroundColor: '#ededed',
+        backgroundColor: '#f5f5f5',
       },
       listView: {
         flex: 1,
@@ -84,7 +84,7 @@ class GiftedMessenger extends Component {
       textInputContainer: {
         height: 44,
         borderTopWidth: 1 / PixelRatio.get(),
-        backgroundColor:'#fff',
+        backgroundColor:'#f5f5f5',
         borderColor: '#ccc',
         flexDirection: 'row',
         paddingLeft: 16,
@@ -94,9 +94,9 @@ class GiftedMessenger extends Component {
         alignSelf: 'center',
         height: 30,
         width: 100,
-        backgroundColor: '#ededed',
+        backgroundColor: '#fff',
         borderWidth:1/PixelRatio.get(),
-        borderColor:'#e4e4e4',
+        borderColor:'#ccc',
         color:'#666',
         borderRadius:4,
         flex: 1,
@@ -651,7 +651,7 @@ GiftedMessenger.defaultProps = {
   hideTextInput: false,
   isLoadingEarlierMessages: false,
   keyboardDismissMode: 'interactive',
-  keyboardShouldPersistTaps: true,
+  keyboardShouldPersistTaps: false,
   leftControlBar: null,
   loadEarlierMessagesButton: false,
   loadEarlierMessagesButtonText: 'Load earlier messages',

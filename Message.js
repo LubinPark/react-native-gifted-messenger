@@ -190,8 +190,7 @@ export default class Message extends Component {
       return (
         <TouchableHighlight
           underlayColor="transparent"
-          onLongPress={() => onMessageLongPress(rowData)}
-        >
+          onLongPress={() => onMessageLongPress(rowData)}>
           {messageView}
         </TouchableHighlight>
       );
