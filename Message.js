@@ -158,7 +158,6 @@ export default class Message extends Component {
     if (rowData.view) {
       RowView = rowData.view;
     }
-
     let messageView = (
       <View>
         {position === 'left' && !this.props.displayNamesInsideBubble ? this.renderName(rowData.name, displayNames, diffMessage) : null}

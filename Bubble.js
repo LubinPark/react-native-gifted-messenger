@@ -1,5 +1,8 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
+const charWrap = (width-90) / (320-90) * 14;
 
 import ParsedText from 'react-native-parsed-text';
 
@@ -21,7 +24,7 @@ const styles = StyleSheet.create({
   textLeft: {
   },
   textRight: {
-    color: '#fff',
+    color: '#1b1b1b',
   },
   textCenter: {
     textAlign: 'center',
@@ -99,13 +102,13 @@ export default class Bubble extends React.Component {
   }
 
   render() {
-    const flexStyle = this.props.position === 'left' ? {marginRight:70} : {flex:1};
+    const flexStyle = this.props.position === 'left' ? {marginRight:70} : {};
     if (this.props.text) {
-      if (this.props.text.length > 40) {
+      console.log(this.props.text.length);
+      if (this.props.text.length > charWrap) {
         flexStyle.flex = 1;
       }
     }
-
     return (
       <View style={[styles.bubble,
         (this.props.position === 'left' ? styles.bubbleLeft : this.props.position === 'right' ? styles.bubbleRight : styles.bubbleCenter),

@@ -517,7 +517,7 @@ class GiftedMessenger extends Component {
   renderRow(rowData = {}) {
     let diffMessage = null;
     diffMessage = this.getPreviousMessage(rowData);
-
+    
     return (
       <View>
         {this.renderDate(rowData)}
