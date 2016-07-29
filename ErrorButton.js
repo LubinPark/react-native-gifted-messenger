@@ -4,16 +4,29 @@ import GiftedSpinner from 'react-native-gifted-spinner';
 
 const styles = StyleSheet.create({
   errorButtonContainer: {
-    marginLeft: 8,
-    alignSelf: 'center',
+    //marginLeft: 8,
+    alignSelf: 'flex-start',
     justifyContent: 'center',
-    backgroundColor: '#e6e6eb',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    backgroundColor: '#f5f5f5',
+    borderWidth:StyleSheet.hairlineWidth,
+    borderColor:'#ccc',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    marginTop:7,
+    marginRight:4,
+  },
+  errorButtonLoading:{
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    width: 24,
+    height: 24,
+    marginTop:7,
+    marginRight:4,
   },
   errorButton: {
     fontSize: 22,
+    color:'#666',
     textAlign: 'center',
   },
 });
@@ -44,22 +57,17 @@ export default class ErrorButton extends React.Component {
   render() {
     if (this.state.isLoading === true) {
       return (
-        <View
-          style={[styles.errorButtonContainer, {
-            backgroundColor: 'transparent',
-            borderRadius: 0,
-          }]}
-        >
+        <View style={styles.errorButtonLoading}>
           <GiftedSpinner />
         </View>
       );
     }
     return (
-      <View style={styles.errorButtonContainer}>
+      <View style={styles.errorButtonLoading}>
         <TouchableHighlight
+          hitSlop ={{top:20, left:20, bottom:20, right:20}}
           underlayColor="transparent"
-          onPress={this.onPress}
-        >
+          onPress={this.onPress}>
           <Text style={styles.errorButton}>↻</Text>
         </TouchableHighlight>
       </View>

@@ -1,14 +1,22 @@
 import React, {
   Component,
 } from 'react';
-import { View, Text, StyleSheet, TouchableHighlight, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableHighlight, Image, Dimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
+const charWrap = (width-90) / (320-90) * 14;
+
 import Bubble from './Bubble';
 import ErrorButton from './ErrorButton';
 
 const styles = StyleSheet.create({
   rowContainer: {
+    flex:0,
     flexDirection: 'row',
     marginBottom: 10,
+  },
+  viewContainer:{
+    width:width-20
   },
   name: {
     color: '#aaaaaa',
@@ -23,6 +31,7 @@ const styles = StyleSheet.create({
   imagePosition: {
     height: 30,
     width: 30,
+    marginTop:4,
     alignSelf: 'flex-end',
     marginLeft: 8,
     marginRight: 8,
@@ -45,6 +54,10 @@ const styles = StyleSheet.create({
     marginRight: 15,
     marginBottom: 10,
     marginTop: -5,
+  },
+  errorButtonDummy:{
+    width: 28,
+    height: 24,
   },
 });
 
@@ -82,10 +95,7 @@ export default class Message extends Component {
       if (diffMessage === null || (diffMessage !== null && (rowData.name !== diffMessage.name || rowData.uniqueId !== diffMessage.uniqueId))) {
         if (typeof onImagePress === 'function') {
           return (
-            <TouchableHighlight
-              underlayColor='transparent'
-              onPress={() => onImagePress(rowData)}
-            >
+            <TouchableHighlight underlayColor='transparent' onPress={() => onImagePress(rowData)}>
               <ImageView
                 source={rowData.image}
                 style={[styles.imagePosition, styles.image, (rowData.position === 'left' ? styles.imageLeft : styles.imageRight)]}
@@ -119,7 +129,7 @@ export default class Message extends Component {
         />
       );
     }
-    return null;
+    return <View style={styles.errorButtonDummy}/>;
   }
 
   renderStatus(status) {
@@ -147,25 +157,24 @@ export default class Message extends Component {
       onMessageLongPress,
     } = this.props;
 
-    const flexStyle = {};
+    const conStyle = (position === 'left') ? {} : {alignSelf:'flex-end'};
     let RowView = Bubble;
-    if (rowData.text) {
-      if (rowData.text.length > 40) {
+    /*if (rowData.text) {
+      if (rowData.text.length > charWrap) {
         flexStyle.flex = 1;
       }
-    }
+    }*/
 
-    if (rowData.view) {
+    if (rowData.view) 
       RowView = rowData.view;
-    }
+
     let messageView = (
-      <View>
+      <View style={[styles.viewContainer,conStyle]}>
         {position === 'left' && !this.props.displayNamesInsideBubble ? this.renderName(rowData.name, displayNames, diffMessage) : null}
         <View
           style={[styles.rowContainer, {
             justifyContent: position === 'left' ? 'flex-start' : position === 'right' ? 'flex-end' : 'center',
-          }]}
-        >
+          }]}>
           {position === 'left' ? this.renderImage(rowData, diffMessage, forceRenderImage, onImagePress) : null}
           {position === 'right' ? this.renderErrorButton(rowData, onErrorButtonPress) : null}
           <RowView

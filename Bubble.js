@@ -19,7 +19,8 @@ const styles = StyleSheet.create({
   text: {
     color: '#1b1b1b',
     fontSize:15,
-    lineHeight:24
+    lineHeight:24,
+    alignSelf:'flex-start',
   },
   textLeft: {
   },
@@ -49,6 +50,12 @@ const styles = StyleSheet.create({
 });
 
 export default class Bubble extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      width:width
+    };
+  }
 
   componentWillMount() {
     Object.assign(styles, this.props.styles);
@@ -62,6 +69,7 @@ export default class Bubble extends React.Component {
     if (this.props.parseText === true) {
       return (
         <ParsedText
+          onLayout={this.textLayout.bind(this)} 
           style={[styles.text, (position === 'left' ? styles.textLeft : position === 'right' ? styles.textRight : styles.textCenter)]}
           parse={
             [
@@ -95,26 +103,36 @@ export default class Bubble extends React.Component {
     }
 
     return (
-      <Text style={[styles.text, (position === 'left' ? styles.textLeft : position === 'right' ? styles.textRight : styles.textCenter)]}>
+      <Text 
+        onLayout={this.textLayout.bind(this)} 
+        style={[styles.text, (position === 'left' ? styles.textLeft : position === 'right' ? styles.textRight : styles.textCenter)]}>
         {text}
       </Text>
     );
   }
 
+  textLayout(event){
+    let {width,height} = event.nativeEvent.layout;
+    if(height < 40) this.setState({width:width+30});
+  }
+
   render() {
-    const flexStyle = this.props.position === 'left' ? {marginRight:70} : {};
+    const flexStyle = {};
     if (this.props.text) {
-      console.log(this.props.text.length);
       if (this.props.text.length > charWrap) {
         flexStyle.flex = 1;
       }
     }
+    if(this.state.width < width){
+      flexStyle.width = this.state.width;
+      flexStyle.flex = 0;
+    }
+    
     return (
       <View style={[styles.bubble,
         (this.props.position === 'left' ? styles.bubbleLeft : this.props.position === 'right' ? styles.bubbleRight : styles.bubbleCenter),
-        (this.props.status === 'ErrorButton' ? styles.bubbleError : null),
-        flexStyle]}
-      >
+        //(this.props.status === 'ErrorButton' ? styles.bubbleError : null),
+        flexStyle]}>
         {this.props.name}
         {this.renderText(this.props.text, this.props.position)}
       </View>
