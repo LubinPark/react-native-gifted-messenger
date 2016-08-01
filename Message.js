@@ -39,6 +39,9 @@ const styles = StyleSheet.create({
   image: {
     alignSelf: 'center',
     borderRadius: 15,
+    backgroundColor:'#ededed',
+    borderWidth:StyleSheet.hairlineWidth,
+    borderColor:'#ccc'
   },
   imageLeft: {
   },
