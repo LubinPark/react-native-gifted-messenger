@@ -9,23 +9,23 @@ import ParsedText from 'react-native-parsed-text';
 const styles = StyleSheet.create({
   bubble: {
     borderRadius: 8,
-    paddingLeft: 14,
+    paddingLeft:  14,
     paddingRight: 14,
-    paddingBottom: 10,
-    paddingTop: 2,
+    //paddingBottom:0,
+    paddingTop:   4,
     borderWidth:StyleSheet.hairlineWidth,
-    borderColor:'#ccc'
+    borderColor:'#ccc',
   },
   text: {
     color: '#1b1b1b',
     fontSize:15,
     lineHeight:24,
-    alignSelf:'flex-start',
+    alignSelf:'flex-start'
   },
   textLeft: {
   },
   textRight: {
-    color: '#1b1b1b',
+    color: '#fff',
   },
   textCenter: {
     textAlign: 'center',
@@ -53,7 +53,8 @@ export default class Bubble extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      width:width
+      width:width,
+      rendered:false
     };
   }
 
@@ -113,26 +114,28 @@ export default class Bubble extends React.Component {
 
   textLayout(event){
     let {width,height} = event.nativeEvent.layout;
-    if(height < 40) this.setState({width:width+30});
+    if(height < 40) this.setState({width:width+30,rendered:true});
+    else this.setState({rendered:true});
   }
 
   render() {
     const flexStyle = {};
     if (this.props.text) {
-      if (this.props.text.length > charWrap) {
+      if (this.props.text.length > charWrap){
         flexStyle.flex = 1;
+        flexStyle.paddingBottom = 6;
       }
+      if(!this.state.rendered)
+        flexStyle.opacity = 0;
     }
     if(this.state.width < width){
       flexStyle.width = this.state.width;
       flexStyle.flex = 0;
     }
-    
+
     return (
       <View style={[styles.bubble,
-        (this.props.position === 'left' ? styles.bubbleLeft : this.props.position === 'right' ? styles.bubbleRight : styles.bubbleCenter),
-        //(this.props.status === 'ErrorButton' ? styles.bubbleError : null),
-        flexStyle]}>
+        (this.props.position === 'left' ? styles.bubbleLeft : this.props.position === 'right' ? styles.bubbleRight : styles.bubbleCenter), flexStyle]}>
         {this.props.name}
         {this.renderText(this.props.text, this.props.position)}
       </View>
