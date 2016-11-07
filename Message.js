@@ -168,8 +168,9 @@ export default class Message extends Component {
       }
     }*/
 
-    if (rowData.view) 
+    /*if (rowData.view) {
       RowView = rowData.view;
+    }*/
 
     let messageView = (
       <View style={[styles.viewContainer,conStyle]}>
