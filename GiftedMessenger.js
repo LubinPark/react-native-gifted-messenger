@@ -10,7 +10,10 @@ import {
   Animated,
   Platform,
   PixelRatio,
-  LayoutAnimation
+  LayoutAnimation,
+  StyleSheet,
+  Image,
+  TouchableOpacity
 } from 'react-native';
 
 import Message from './Message';
@@ -19,6 +22,7 @@ import moment from 'moment';
 import {setLocale} from './Locale';
 import deepEqual from 'deep-equal';
 import Button from 'react-native-button';
+import InvertibleScrollView from 'react-native-invertible-scroll-view';
 
 class GiftedMessenger extends Component {
 
@@ -80,10 +84,11 @@ class GiftedMessenger extends Component {
       },
       listView: {
         flex: 1,
+        backgroundColor: '#f5f5f5',
       },
       textInputContainer: {
         height: 44,
-        borderTopWidth: 1 / PixelRatio.get(),
+        borderTopWidth:StyleSheet.hairlineWidth,
         backgroundColor:'#f5f5f5',
         borderColor: '#ccc',
         flexDirection: 'row',
@@ -95,7 +100,7 @@ class GiftedMessenger extends Component {
         height: 30,
         width: 100,
         backgroundColor: '#fff',
-        borderWidth:1/PixelRatio.get(),
+        borderWidth:StyleSheet.hairlineWidth,
         borderColor:'#ccc',
         color:'#666',
         borderRadius:4,
@@ -135,6 +140,24 @@ class GiftedMessenger extends Component {
         fontSize: 14,
         color:'#ccc'
       },
+      imgButton:{
+        width:30,
+        height:30,
+        backgroundColor:"#fff",
+        borderWidth:StyleSheet.hairlineWidth,
+        borderColor:'#ccc',
+        borderRadius:15,
+        marginTop:7,
+        marginLeft:16,
+        alignItems:'center',
+        justifyContent:'center',
+        overflow:'hidden'
+      },
+      imgSrc:{
+        width:18,
+        height:18,
+        tintColor:'#ccc'
+      }
     };
 
     Object.assign(this.styles, this.props.styles);
@@ -230,9 +253,10 @@ class GiftedMessenger extends Component {
     }
   }
 
-  onKeyboardWillHide() {
+  onKeyboardWillHide(e) {
+    let offset = e.endCoordinates.height;
     LayoutAnimation.configureNext({
-      duration: 250,
+      duration: e.duration,
       create: {
         type:     LayoutAnimation.Types.linear,
         property: LayoutAnimation.Properties.opacity,
@@ -241,6 +265,11 @@ class GiftedMessenger extends Component {
     });
     this.setState({height:this.listViewMaxHeight});
 
+    /*if (this.props.keyboardShouldPersistTaps === false) {
+      if (this.isLastMessageVisible()) {
+        this.scrollToBottom(true,offset);
+      }
+    }*/
     /*Animated.timing(this.state.height, {
       toValue: this.listViewMaxHeight,
       duration: 150,
@@ -251,7 +280,6 @@ class GiftedMessenger extends Component {
     if (Platform.OS === 'android') {
       this.onKeyboardWillHide(e);
     }
-
     // TODO test in android
     if (this.props.keyboardShouldPersistTaps === false) {
       if (this.isLastMessageVisible()) {
@@ -261,8 +289,9 @@ class GiftedMessenger extends Component {
   }
 
   onKeyboardWillShow(e) {
+    let offset = e.endCoordinates.height;
     LayoutAnimation.configureNext({
-      duration: 250,
+      duration: e.duration,
       create: {
         type:     LayoutAnimation.Types.linear,
         property: LayoutAnimation.Properties.opacity,
@@ -270,7 +299,6 @@ class GiftedMessenger extends Component {
       update: { type: 'keyboard' }
     });
     this.setState({height:this.listViewMaxHeight - e.endCoordinates.height});
-
     /*Animated.timing(this.state.height, {
       toValue: this.listViewMaxHeight - e.endCoordinates.height,
       duration: 200,
@@ -366,7 +394,7 @@ class GiftedMessenger extends Component {
 
     const rows = {};
     const identities = [];
-    for (let i = 0; i < messages.length; i++) {
+    for (let i = messages.length-1; i >= 0; i--) {
       if (typeof messages[i].uniqueId === 'undefined') {
         console.warn('messages['+i+'].uniqueId is missing');
       }
@@ -408,13 +436,13 @@ class GiftedMessenger extends Component {
     return !!this._visibleRows.s1[this.getLastMessageUniqueId()];
   }
 
-  scrollToBottom(animated = null) {
+  scrollToBottom(animated = null,offset = 0) {
     if (this._listHeight && this._footerY && this._footerY > this._listHeight) {
       let scrollDistance = this._listHeight - this._footerY;
-      if (this.props.typingMessage) {
+      if (this.props.typingMessage)
         scrollDistance -= 44;
-      }
-
+      scrollDistance += offset;
+      
       this.scrollResponder.scrollTo({
         y: -scrollDistance,
         x: 0,
@@ -518,8 +546,49 @@ class GiftedMessenger extends Component {
     let diffMessage = null;
     diffMessage = this.getPreviousMessage(rowData);
     
+    if(!!rowData.deal){
+      let DealView = this.props.dealDisplay;
+      let fromMe = rowData.position === 'right';
+      return (
+        <View key={rowData.uniqueId}>
+          {this.renderDate(rowData)}
+          <DealView
+            navigator={this.props.navigator}
+            key={rowData.uniqueId+'inner'}
+            deal={rowData.deal}
+            onErrorButtonPress={this.props.onErrorButtonPress}
+            fromMe={fromMe}
+            styles={this.styles}
+          />
+        </View>
+      );
+    }
+
+    if(!!rowData.imageData){
+      let ImgView = this.props.imageDisplay;
+      let fromMe = rowData.position === 'right';
+      return (
+        <View key={rowData.uniqueId}>
+          {this.renderDate(rowData)}
+          <ImgView
+            navigator={this.props.navigator}
+            rowData={rowData}
+            onImagePress={this.props.onImagePress}
+            key={rowData.uniqueId+'inner'}
+            imgData  ={rowData.imageData}
+            imgWidth ={rowData.width}
+            imgHeight={rowData.height}
+            loading={/\:/.test(rowData.uniqueId)}
+            onErrorButtonPress={this.props.onErrorButtonPress}
+            fromMe={fromMe}
+            styles={this.styles} 
+          />
+        </View>
+      );
+    }
+
     return (
-      <View>
+      <View key={rowData.uniqueId}>
         {this.renderDate(rowData)}
         <Message
           rowData={rowData}
@@ -547,40 +616,33 @@ class GiftedMessenger extends Component {
   renderAnimatedView() {
     return (
       <View
-        style={{
-          height: this.state.height,
-          justifyContent: 'flex-end',
-        }}
-
-      >
+        style={{ height: this.state.height }}>
         <ListView
-          ref="listView"
-          dataSource={this.state.dataSource}
-          renderRow={this.renderRow}
-          renderHeader={this.renderLoadEarlierMessages}
-          enableEmptySections={true}
-          onLayout={this.onLayout}
-          renderFooter={this.renderFooter}
-          onChangeVisibleRows={this.onChangeVisibleRows}
-
-          style={this.styles.listView}
-
+          ref                  ="listView"
+          renderScrollComponent={props => <InvertibleScrollView {...props} inverted />}
+          dataSource           ={this.state.dataSource}
+          renderRow            ={this.renderRow}
+          renderHeader         ={this.renderFooter}
+          enableEmptySections  ={true}
+          onLayout             ={this.onLayout}
+          renderFooter         ={this.renderLoadEarlierMessages}
+          onChangeVisibleRows  ={this.onChangeVisibleRows}
+          style                ={this.styles.listView}
           // not supported in Android - to fix this issue in Android, onKeyboardWillShow is called inside onKeyboardDidShow
-          onKeyboardWillShow={this.onKeyboardWillShow}
-          onKeyboardDidShow={this.onKeyboardDidShow}
+          onKeyboardWillShow   ={this.onKeyboardWillShow}
+          onKeyboardDidShow    ={this.onKeyboardDidShow}
           // not supported in Android - to fix this issue in Android, onKeyboardWillHide is called inside onKeyboardDidHide
-          onKeyboardWillHide={this.onKeyboardWillHide}
-          onKeyboardDidHide={this.onKeyboardDidHide}
+          onKeyboardWillHide   ={this.onKeyboardWillHide}
+          onKeyboardDidHide    ={this.onKeyboardDidHide}
           // @issue keyboardShouldPersistTaps={false} + textInput focused = 2 taps are needed to trigger the ParsedText links
           keyboardShouldPersistTaps={this.props.keyboardShouldPersistTaps}
-          keyboardDismissMode={this.props.keyboardDismissMode}
+          keyboardDismissMode  ={this.props.keyboardDismissMode}
 
-          initialListSize={this.props.messages.length}
-          pageSize={this.props.messages.length}
+          initialListSize      ={this.props.messages.length}
+          pageSize             ={this.props.messages.length}
 
           {...this.props}
         />
-
       </View>
     );
   }
@@ -621,6 +683,11 @@ class GiftedMessenger extends Component {
             enablesReturnKeyAutomatically={true}
             blurOnSubmit={this.props.blurOnSubmit}
           />
+          <TouchableOpacity onPress={this.props.handleImageSend} activeOpacity={0.6}>
+            <View style={this.styles.imgButton}>
+              <Image source={{uri:'camera'}} style={this.styles.imgSrc} />
+            </View>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -648,6 +715,7 @@ GiftedMessenger.defaultProps = {
   handlePhonePress: () => {},
   handleSend: () => {},
   handleUrlPress: () => {},
+  handleImageSend:() => {},
   hideTextInput: false,
   isLoadingEarlierMessages: false,
   keyboardDismissMode: 'interactive',
@@ -673,6 +741,8 @@ GiftedMessenger.defaultProps = {
   submitOnReturn: false,
   text: '',
   typingMessage: '',
+  dealDisplay:null,
+  imageDisplay:null
 };
 
 GiftedMessenger.propTypes = {
@@ -684,7 +754,10 @@ GiftedMessenger.propTypes = {
   forceRenderImage: React.PropTypes.bool,
   handleEmailPress: React.PropTypes.func,
   handlePhonePress: React.PropTypes.func,
+
   handleSend: React.PropTypes.func,
+  handleImageSend: React.PropTypes.func,
+
   handleUrlPress: React.PropTypes.func,
   hideTextInput: React.PropTypes.bool,
   isLoadingEarlierMessages: React.PropTypes.bool,
@@ -713,6 +786,9 @@ GiftedMessenger.propTypes = {
   styles: React.PropTypes.object,
   submitOnReturn: React.PropTypes.bool,
   typingMessage: React.PropTypes.string,
+
+  dealDisplay:React.PropTypes.func,
+  imageDisplay:React.PropTypes.func
 };
 
 
