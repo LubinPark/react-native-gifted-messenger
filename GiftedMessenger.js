@@ -24,6 +24,8 @@ import deepEqual from 'deep-equal';
 import Button from 'react-native-button';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
 
+const isAndroid = (Platform.OS === 'android');
+
 class GiftedMessenger extends Component {
 
   constructor(props) {
@@ -71,12 +73,14 @@ class GiftedMessenger extends Component {
       dataSource: ds.cloneWithRows([]),
       text: props.text,
       disabled: true,
+      openOptions:false,
       height: this.listViewMaxHeight, //new Animated.Value(this.listViewMaxHeight),
       appearAnim: new Animated.Value(0),
     };
   }
 
   componentWillMount() {
+    const isAndroid = (Platform.OS === 'android');
     this.styles = {
       container: {
         flex: 1,
@@ -94,6 +98,14 @@ class GiftedMessenger extends Component {
         flexDirection: 'row',
         paddingLeft: 16,
         paddingRight:16,
+      },
+      textInputWithButtons:{
+        height: 124,
+        overflow:'hidden',
+        borderTopWidth:StyleSheet.hairlineWidth,
+        backgroundColor:'#f5f5f5',
+        borderColor: '#ccc',
+        flexDirection: 'row',
       },
       textInput: {
         alignSelf: 'center',
@@ -156,7 +168,8 @@ class GiftedMessenger extends Component {
       imgSrc:{
         width:18,
         height:18,
-        tintColor:'#ccc'
+        backgroundColor:'#fff',
+        tintColor:'#666'
       }
     };
 
@@ -253,17 +266,44 @@ class GiftedMessenger extends Component {
     }
   }
 
+  onOpenPanel(){
+    if(this.state.openOptions){
+      this._input && this._input.focus();
+      return;
+    }
+
+    
+    if(this.state.height < this.listViewMaxHeight - 20){
+      let self = this;
+      this.setState({openOptions:true},()=>{
+        self._input.blur();
+      });
+    }else{
+      LayoutAnimation.configureNext({
+        duration: 250,
+        create: {
+          type:     LayoutAnimation.Types.linear,
+          property: LayoutAnimation.Properties.opacity,
+        },
+        update: { type: isAndroid?'linear':'keyboard' }
+      });
+      this.setState({height:this.listViewMaxHeight - 124, openOptions:true});
+    }
+  }
+
   onKeyboardWillHide(e) {
-    let offset = e.endCoordinates.height;
+    //let offset = e.endCoordinates.height;
     LayoutAnimation.configureNext({
-      duration: e.duration,
+      duration: isAndroid?250:e.duration,
       create: {
         type:     LayoutAnimation.Types.linear,
         property: LayoutAnimation.Properties.opacity,
       },
-      update: { type: 'keyboard' }
+      update: { type: isAndroid?'linear':'keyboard' }
     });
-    this.setState({height:this.listViewMaxHeight});
+    if(this.state.openOptions){
+      this.setState({height:this.listViewMaxHeight-124, openOptions:true});
+    }else this.setState({height:this.listViewMaxHeight, openOptions:false});
 
     /*if (this.props.keyboardShouldPersistTaps === false) {
       if (this.isLastMessageVisible()) {
@@ -291,14 +331,14 @@ class GiftedMessenger extends Component {
   onKeyboardWillShow(e) {
     let offset = e.endCoordinates.height;
     LayoutAnimation.configureNext({
-      duration: e.duration,
+      duration: isAndroid?250:e.duration,
       create: {
         type:     LayoutAnimation.Types.linear,
         property: LayoutAnimation.Properties.opacity,
       },
-      update: { type: 'keyboard' }
+      update: { type: isAndroid?'linear':'keyboard' }
     });
-    this.setState({height:this.listViewMaxHeight - e.endCoordinates.height});
+    this.setState({height:this.listViewMaxHeight - offset,openOptions:false});
     /*Animated.timing(this.state.height, {
       toValue: this.listViewMaxHeight - e.endCoordinates.height,
       duration: 200,
@@ -544,21 +584,21 @@ class GiftedMessenger extends Component {
 
   renderRow(rowData = {}) {
     let diffMessage = null;
+    let fromMe = rowData.position === 'right';
     diffMessage = this.getPreviousMessage(rowData);
     
     if(!!rowData.deal){
       let DealView = this.props.dealDisplay;
-      let fromMe = rowData.position === 'right';
       return (
         <View key={rowData.uniqueId}>
           {this.renderDate(rowData)}
           <DealView
-            navigator={this.props.navigator}
-            key={rowData.uniqueId+'inner'}
-            deal={rowData.deal}
+            navigator         ={this.props.navigator}
+            key               ={rowData.uniqueId+'inner'}
+            deal              ={rowData.deal}
             onErrorButtonPress={this.props.onErrorButtonPress}
-            fromMe={fromMe}
-            styles={this.styles}
+            fromMe            ={fromMe}
+            styles            ={this.styles}
           />
         </View>
       );
@@ -566,57 +606,72 @@ class GiftedMessenger extends Component {
 
     if(!!rowData.imageData){
       let ImgView = this.props.imageDisplay;
-      let fromMe = rowData.position === 'right';
       return (
         <View key={rowData.uniqueId}>
           {this.renderDate(rowData)}
           <ImgView
-            navigator={this.props.navigator}
-            rowData={rowData}
-            onImagePress={this.props.onImagePress}
-            key={rowData.uniqueId+'inner'}
-            imgData  ={rowData.imageData}
-            imgWidth ={rowData.width}
-            imgHeight={rowData.height}
-            loading={/\:/.test(rowData.uniqueId)}
+            navigator         ={this.props.navigator}
+            rowData           ={rowData}
+            onImagePress      ={this.props.onImagePress}
+            key               ={rowData.uniqueId+'inner'}
+            imgData           ={rowData.imageData}
+            imgWidth          ={rowData.width}
+            imgHeight         ={rowData.height}
+            zoomImage         ={this.props.zoomImage}
+            loading           ={/\:/.test(rowData.uniqueId)}
             onErrorButtonPress={this.props.onErrorButtonPress}
-            fromMe={fromMe}
-            styles={this.styles} 
+            fromMe            ={fromMe}
+            styles            ={this.styles} 
           />
         </View>
       );
     }
 
+    if(!!rowData.text){
+      return (
+        <View key={rowData.uniqueId}>
+          {this.renderDate(rowData)}
+          <Message
+            rowData={rowData}
+            onErrorButtonPress={this.props.onErrorButtonPress}
+            displayNames={this.props.displayNames}
+            displayNamesInsideBubble={this.props.displayNamesInsideBubble}
+            diffMessage={diffMessage}
+            position={rowData.position}
+            forceRenderImage={this.props.forceRenderImage}
+            onImagePress={this.props.onImagePress}
+            onMessageLongPress={this.props.onMessageLongPress}
+            renderCustomText={this.props.renderCustomText}
+
+            parseText={this.props.parseText}
+            handlePhonePress={this.props.handlePhonePress}
+            handleUrlPress={this.props.handleUrlPress}
+            handleEmailPress={this.props.handleEmailPress}
+
+            styles={this.styles}
+          />
+        </View>
+      );
+    }
+
+    let UnsupportView = this.props.unsupportDisplay;
     return (
       <View key={rowData.uniqueId}>
-        {this.renderDate(rowData)}
-        <Message
-          rowData={rowData}
-          onErrorButtonPress={this.props.onErrorButtonPress}
-          displayNames={this.props.displayNames}
-          displayNamesInsideBubble={this.props.displayNamesInsideBubble}
-          diffMessage={diffMessage}
-          position={rowData.position}
-          forceRenderImage={this.props.forceRenderImage}
-          onImagePress={this.props.onImagePress}
-          onMessageLongPress={this.props.onMessageLongPress}
-          renderCustomText={this.props.renderCustomText}
-
-          parseText={this.props.parseText}
-          handlePhonePress={this.props.handlePhonePress}
-          handleUrlPress={this.props.handleUrlPress}
-          handleEmailPress={this.props.handleEmailPress}
-
-          styles={this.styles}
-        />
-      </View>
-  );
+          {this.renderDate(rowData)}
+          <UnsupportView
+            rowData={rowData}
+            onImagePress={this.props.onImagePress}
+            key={rowData.uniqueId+'inner'}
+            fromMe={fromMe}
+            styles={this.styles} 
+          />
+        </View>
+    );
   }
 
   renderAnimatedView() {
     return (
-      <View
-        style={{ height: this.state.height }}>
+      <View style={{ height: this.state.height }}>
         <ListView
           ref                  ="listView"
           renderScrollComponent={props => <InvertibleScrollView {...props} inverted />}
@@ -655,6 +710,15 @@ class GiftedMessenger extends Component {
     });
   }
 
+  renderButtonOptions(){
+    if(!this.state.openOptions) return false;
+    return (
+        <View style={[this.styles.textInputWithButtons,{height:this.listViewMaxHeight - this.state.height}]}>
+          {this.props.children}
+        </View>
+      );
+  }
+
   renderTextInput() {
     if (this.props.hideTextInput === false) {
       /*
@@ -671,21 +735,24 @@ class GiftedMessenger extends Component {
         <View style={this.styles.textInputContainer}>
           {this.props.leftControlBar}
           <TextInput
+            ref={(input)=>{this._input = input;}}
             style={this.styles.textInput}
+            underlineColorAndroid={"transparent"}
             placeholder={this.props.placeholder}
             placeholderTextColor={this.props.placeholderTextColor}
             onChangeText={this.onChangeText}
             value={this.state.text}
             selectionColor={"#666"}
+            underline
             autoFocus={this.props.autoFocus}
             returnKeyType={this.props.submitOnReturn ? 'send' : 'default'}
             onSubmitEditing={this.props.submitOnReturn ? this.onSend : () => {}}
             enablesReturnKeyAutomatically={true}
             blurOnSubmit={this.props.blurOnSubmit}
           />
-          <TouchableOpacity onPress={this.props.handleImageSend} activeOpacity={0.6}>
+          <TouchableOpacity onPress={()=>{this.onOpenPanel()}} activeOpacity={0.6}>
             <View style={this.styles.imgButton}>
-              <Image source={{uri:'camera'}} style={this.styles.imgSrc} />
+              <Image source={{uri:'plus'}} style={this.styles.imgSrc} />
             </View>
           </TouchableOpacity>
         </View>
@@ -699,6 +766,7 @@ class GiftedMessenger extends Component {
       <View style={this.styles.container}>
         {this.renderAnimatedView()}
         {this.renderTextInput()}
+        {this.renderButtonOptions()}
       </View>
     );
   }
@@ -716,6 +784,7 @@ GiftedMessenger.defaultProps = {
   handleSend: () => {},
   handleUrlPress: () => {},
   handleImageSend:() => {},
+  //zoomImage:() => {},
   hideTextInput: false,
   isLoadingEarlierMessages: false,
   keyboardDismissMode: 'interactive',
@@ -757,6 +826,7 @@ GiftedMessenger.propTypes = {
 
   handleSend: React.PropTypes.func,
   handleImageSend: React.PropTypes.func,
+  zoomImage: React.PropTypes.func,
 
   handleUrlPress: React.PropTypes.func,
   hideTextInput: React.PropTypes.bool,
@@ -787,8 +857,9 @@ GiftedMessenger.propTypes = {
   submitOnReturn: React.PropTypes.bool,
   typingMessage: React.PropTypes.string,
 
-  dealDisplay:React.PropTypes.func,
-  imageDisplay:React.PropTypes.func
+  dealDisplay:     React.PropTypes.func,
+  imageDisplay:    React.PropTypes.func,
+  unsupportDisplay:React.PropTypes.func
 };
 
 
